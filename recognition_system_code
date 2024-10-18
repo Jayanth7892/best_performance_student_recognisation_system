@@ -1,0 +1,39 @@
+import pandas as pd
+
+# Load the Excel file
+df = pd.read_excel('Book1.xlsx')
+
+# Define the weights for each column
+weights = {
+    'cgpa': 0.3,
+    'academic_performance': 0.2,
+    'core_courses_performance': 0.2,
+    'hackathon_participation': 0.1,
+    'paper_presentations': 0.1,
+    'contributions': 0.1
+}
+
+# Normalize the values in each column to a common scale (0-100)
+for col in weights:
+    df[col] = (df[col] - df[col].min()) / (df[col].max() - df[col].min()) * 100
+
+# Calculate the weighted sum of the normalized values for each student
+df['overall_score'] = sum(df[col] * weight for col, weight in weights.items())
+
+# Filter the DataFrame to include only 1st to 4th year students
+valid_years = [1, 2, 3, 4]
+df_filtered = df[df['year'].isin(valid_years)]
+
+# Get user input for the year
+user_year = int(input("Enter the year (1-4) to find the best student: "))
+
+# Check if the entered year is valid
+if user_year in valid_years:
+    year_df = df_filtered[df_filtered['year'] == user_year]
+    if not year_df.empty:  # Check if there are students in that year
+        best_student_id = year_df.loc[year_df['overall_score'].idxmax(), 'id']
+        print(f"The best student ID for year {user_year} is: {best_student_id}")
+    else:
+        print(f"No students found for year {user_year}.")
+else:
+    print("Invalid year entered. Please enter a year between 1 and 4.")
