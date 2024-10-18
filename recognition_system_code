@@ -24,16 +24,29 @@ df['overall_score'] = sum(df[col] * weight for col, weight in weights.items())
 valid_years = [1, 2, 3, 4]
 df_filtered = df[df['year'].isin(valid_years)]
 
-# Get user input for the year
-user_year = int(input("Enter the year (1-4) to find the best student: "))
-
-# Check if the entered year is valid
-if user_year in valid_years:
-    year_df = df_filtered[df_filtered['year'] == user_year]
+# Function to find the top 3 students for the entered year
+def find_top_students(year):
+    year_df = df_filtered[df_filtered['year'] == year]
     if not year_df.empty:  # Check if there are students in that year
-        best_student_id = year_df.loc[year_df['overall_score'].idxmax(), 'id']
-        print(f"The best student ID for year {user_year} is: {best_student_id}")
+        top_students = year_df.nlargest(3, 'overall_score')[['id', 'overall_score']]
+        return top_students
     else:
-        print(f"No students found for year {user_year}.")
+        return None
+
+# API endpoint to find the top 3 students
+def get_top_students(year):
+    top_students = find_top_students(year)
+    if top_students is not None:
+        return top_students.to_dict(orient='records')
+    else:
+        return {'error': 'No students found for the given year'}
+
+# Example usage:
+year = int(input("Enter the year: "))
+result = get_top_students(year)
+if 'error' in result:
+    print(result['error'])
 else:
-    print("Invalid year entered. Please enter a year between 1 and 4.")
+    print("Top 3 students in year", year, ":")
+    for i, student in enumerate(result):
+        print(f"Rank {i+1}: Student ID - {student['id']}, Overall Score - {student['overall_score']:.2f}")
